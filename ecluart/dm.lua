@@ -1,5 +1,5 @@
 -- Defines a data management module.
-local dm = {} -- version 2025.04
+local dm = {} -- version 2025.11
 
 -- Checks if the parameter is a valid child widget.
 -- isValidChild(parameter: any) -> boolean
@@ -18,8 +18,14 @@ end
 
 -- Checks if the parameter is a string type.
 -- isString(parameter: any) -> boolean
-local function isString(parameter)
+local function isStringType(parameter)
   return type(parameter) == "string"
+end
+
+-- Checks if the paramter is a function type.
+-- isFunction(parameter: any) -> boolean
+local function isFunctionType(parameter)
+  return type(parameter) == "function"
 end
 
 -- Checks if the parameter is a nil type.
@@ -28,53 +34,39 @@ local function isNil(parameter)
   return type(parameter) == "nil"
 end
 
--- Checks if the parameter is a table type.
--- isTable(parameter: any) -> boolean
-local function isTable(parameter)
-  return type(parameter) == "table"
-end
-
 -- Defines the data manager object.
 local DataManager = Object({})
 
 -- Creates the data manager constructor.
 function DataManager:constructor()
-  local _source = {}
-
-  function self:set_source(value)
-    if not isTable(value) then
-      value = {}
-    end
-
-    _source = value
-  end
-
-  function self:get_source()
-    return _source
-  end
-
+  self.source = {}
   self.children = {}
 end
 
--- Adds a widget, property and source field.
--- add(widget: object, property: string, field: string) -> none
-function DataManager:add(widget, property, field)
+-- Adds a widget, property, source field, field type and default value.
+-- add(widget: object, property: string, field: string, type: function, default: any) -> none
+function DataManager:add(widget, property, field, type, default)
   if not isValidChild(widget) then return end
-  if not isString(property) then return end
-  if not isString(field) then return end
+  if not isStringType(property) then return end
+  if not isStringType(field) then return end
+  if not isFunctionType(type) then return end
+  if property == "" then return end
+  if field == "" then return end
 
   local newChild = {
     widget = widget,
     property = property,
-    field = field
+    field = field,
+    type = type,
+    default = default
   }
 
   table.insert(self.children, newChild)
 end
 
--- Sets the source value for each widget.
--- apply() -> none
-function DataManager:apply()
+-- Loads the source value for each widget.
+-- load() -> none
+function DataManager:load()
   for _, child in ipairs(self.children) do
     local sourceValue = self.source[child.field]
 
@@ -84,33 +76,40 @@ function DataManager:apply()
   end
 end
 
+-- Saves the source value for each widget.
+-- save() -> none
+function DataManager:save()
+  for _, child in ipairs(self.children) do
+    local widgetValue = child.widget[child.property]
+
+    if not isNil(widgetValue) then
+      self.source[child.field] = child.widget[child.property]
+    end
+  end
+end
+
+-- Sets the default value for each widget.
+-- default() -> none
+function DataManager:default()
+  for _, child in ipairs(self.children) do
+    child.widget[child.property] = child.default
+  end
+end
+
 -- Gets the source value for a field.
 -- value(field: string) -> any
 function DataManager:value(field)
-  if not isString(field) then return nil end
+  if not isStringType(field) then return end
+  if field == "" then return end
   return self.source[field] or nil
 end
 
 -- Updates the source value for a field.
 -- update(field: string, value: any) -> none
 function DataManager:update(field, value)
-  if not isString(field) then return end
-
-  if not isNil(self.source[field]) then
-    self.source[field] = value
-  end
-end
-
--- Saves the source value for each widget.
--- save() -> none
-function DataManager:save()
-  for _, child in ipairs(self.children) do
-    local sourceValue = child.widget[child.property]
-
-    if not isNil(sourceValue) then
-      self.source[child.field] = sourceValue
-    end
-  end
+  if not isStringType(field) then return end
+  if field == "" then return end
+  self.source[field] = value
 end
 
 -- Initializes a new data manager instance.
