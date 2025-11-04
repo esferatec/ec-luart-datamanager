@@ -17,20 +17,20 @@ local function isValidChild(parameter)
 end
 
 -- Checks if the parameter is a string type.
--- isString(parameter: any) -> boolean
+-- isStringType(parameter: any) -> boolean
 local function isStringType(parameter)
   return type(parameter) == "string"
 end
 
 -- Checks if the paramter is a function type.
--- isFunction(parameter: any) -> boolean
+-- isFunctionType(parameter: any) -> boolean
 local function isFunctionType(parameter)
   return type(parameter) == "function"
 end
 
 -- Checks if the parameter is a nil type.
--- isNil(parameter: any) -> boolean
-local function isNil(parameter)
+-- isNilType(parameter: any) -> boolean
+local function isNilType(parameter)
   return type(parameter) == "nil"
 end
 
@@ -49,7 +49,8 @@ function DataManager:add(widget, property, field, type, default)
   if not isValidChild(widget) then return end
   if not isStringType(property) then return end
   if not isStringType(field) then return end
-  if not isFunctionType(type) then return end
+  if not isNilType(type) and not isFunctionType(type) then return end
+  if not isStringType(property) then return end
   if property == "" then return end
   if field == "" then return end
 
@@ -70,7 +71,7 @@ function DataManager:load()
   for _, child in ipairs(self.children) do
     local sourceValue = self.source[child.field]
 
-    if not isNil(sourceValue) then
+    if not isNilType(sourceValue) then
       child.widget[child.property] = sourceValue
     end
   end
@@ -82,8 +83,8 @@ function DataManager:save()
   for _, child in ipairs(self.children) do
     local widgetValue = child.widget[child.property]
 
-    if not isNil(widgetValue) then
-      self.source[child.field] = child.widget[child.property]
+    if not isNilType(widgetValue) then
+      self.source[child.field] = isNilType(child.type) and widgetValue or child.type(widgetValue)
     end
   end
 end
