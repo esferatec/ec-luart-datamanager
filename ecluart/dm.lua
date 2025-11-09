@@ -5,15 +5,16 @@ local dm = {} -- version 2025.11
 -- isValidChild(parameter: any) -> boolean
 local function isValidChild(parameter)
   local invalidTypes = {
-    "nil",
-    "boolean",
-    "number",
-    "string",
-    "userdata",
-    "function",
-    "thread" }
+    ["nil"] = true,
+    ["boolean"] = true,
+    ["number"] = true,
+    ["string"] = true,
+    ["userdata"] = true,
+    ["function"] = true,
+    ["thread"] = true
+  }
 
-  return not table.concat(invalidTypes, ","):find(type(parameter))
+  return not invalidTypes[type(parameter)]
 end
 
 -- Checks if the parameter is a string type.
@@ -43,13 +44,13 @@ function DataManager:constructor()
   self.children = {}
 end
 
--- Adds a widget, property, source field, field type and default value.
--- add(widget: object, property: string, field: string, type: function, default: any) -> none
-function DataManager:add(widget, property, field, type, default)
+-- Adds a widget, widget property, source field, field converter and default value.
+-- add(widget: object, property: string, field: string, converter: function, default: any) -> none
+function DataManager:add(widget, property, field, converter, default)
   if not isValidChild(widget) then return end
   if not isStringType(property) then return end
   if not isStringType(field) then return end
-  if not isNilType(type) and not isFunctionType(type) then return end
+  if not isNilType(converter) and not isFunctionType(converter) then return end
   if not isStringType(property) then return end
   if property == "" then return end
   if field == "" then return end
@@ -58,7 +59,7 @@ function DataManager:add(widget, property, field, type, default)
     widget = widget,
     property = property,
     field = field,
-    type = type,
+    converter = converter,
     default = default
   }
 
@@ -70,10 +71,7 @@ end
 function DataManager:load()
   for _, child in ipairs(self.children) do
     local sourceValue = self.source[child.field]
-
-    if not isNilType(sourceValue) then
-      child.widget[child.property] = sourceValue
-    end
+    child.widget[child.property] = sourceValue
   end
 end
 
@@ -82,10 +80,7 @@ end
 function DataManager:save()
   for _, child in ipairs(self.children) do
     local widgetValue = child.widget[child.property]
-
-    if not isNilType(widgetValue) then
-      self.source[child.field] = isNilType(child.type) and widgetValue or child.type(widgetValue)
-    end
+    self.source[child.field] = child.converter and child.converter(widgetValue) or widgetValue
   end
 end
 

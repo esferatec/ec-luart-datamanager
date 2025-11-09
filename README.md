@@ -51,10 +51,10 @@ Table containing the source data.
 ## Method - add
 
 ```Lua
-DataManager:add(widget: object, property: string, field: string, type: function, default: any) -> none
+DataManager:add(widget: object, property: string, field: string, converter: function, default: any) -> none
 ```
 
-Adds a widget, property, source field, field type and default value.
+Adds a widget, widget property, source field, field converter and default value.
 
 ## Method - load
 
